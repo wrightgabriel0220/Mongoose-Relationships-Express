@@ -1,17 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><%= farm.name %></title>
 </head>
+
 <body>
     <h1><%= farm.name  %> </h1>
+
     <ul>
         <li>City: <%= farm.city %></li>
         <li>Email: <%= farm.email %></li>
     </ul>
 
+    <h2>Products:</h2>
+    <ol>
+        <% for (let product of farm.products) { %>
+        <li><a href="/products/<%=product.id%>/details"><%= product.name %></a> </li>
+        <%console.log(product)%> 
+        <%}  %>
+    </ol>
+
+    <a href="/farms/<%=farm._id%>/products/new"><button>Add Product</button></a>
     <a href="/farms"><button>Back to All Farms</button></a>
 </body>
+
 </html>

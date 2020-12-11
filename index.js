@@ -4,6 +4,8 @@ const path = require("path");
 const mongoose = require("mongoose");
 const methodOverride = require("method-override");
 const Farm = require('./models/farm');
+const catchAsync = require('./utils/catchAsync');
+const ExpressError = require('./utils/ExpressError');
 
 const Product = require("./models/product");
 
@@ -26,46 +28,43 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
 // FARM ROUTES
-app.get('/farms', async (req, res) => {
+app.get('/farms', catchAsync(async (req, res) => {
   const farms = await Farm.find({});
   res.render('farms/index', { farms });
-})
+}))
 
-app.get('/farms/:id', async (req, res) => {
-  const farm = await Farm.findById(req.params.id);
+app.get('/farms/:id', catchAsync(async (req, res) => {
+  const farm = await Farm.findById(req.params.id).populate('products');
   res.render('farms/show', { farm });
-})
+}))
 
 app.get('/farms/new', (req, res) => {
   res.render('farms/new');
 })
 
-app.post('/farms', async (req, res) => {
+app.post('/farms', catchAsync(async (req, res) => {
   const farm = new Farm(req.body);
   await farm.save();
   res.redirect('/farms');
-})
+}))
 
-app.get('/farms/:id/products/new', (req, res) => {
-  try {
+app.get('/farms/:id/products/new', catchAsync(async (req, res) => {
     const { id } = req.params;
+    const { farm } = await Farm.findById(id);
     res.render('products/new', { categories, id });
-  } catch (e) {
-    console.log(e);
-  }
-})
+}))
 
-app.post('/farms/:id/products', async (req, res) => {
-  try {
+app.post('/farms/:id/products', catchAsync(async (req, res) => {
     const { id } = req.params;
     const farm = await Farm.findById(id);
     const { name, price, category } = req.body;
     const product = new Product({ name, price, category });
-    res.send(farm);
-  } catch (e) {
-    console.log(e);
-  }
-})
+    farm.products.push(product);
+    product.farm = farm;
+    await farm.save();
+    await product.save();
+    res.redirect(`/farms/${id}`);
+}))
 
 
 
@@ -88,11 +87,15 @@ app.get("/products/new", (req, res) => {
   res.render("products/new", { categories });
 });
 
-app.get("/products/:id", async (req, res) => {
+*/
+app.get("/products/:id/details", catchAsync(async (req, res) => {
   const { id } = req.params;
+  console.log(id);
   const product = await Product.findById(id);
+  console.log(product);
   res.render("products/details", { product });
-});
+}));
+/*
 
 app.get("/products/:id/edit", async (req, res) => {
   const { id } = req.params;
@@ -114,11 +117,13 @@ app.put("/products/:id", async (req, res) => {
   res.redirect(`/products/${product._id}`);
 });
 
-app.delete("/products/:id", async (req, res) => {
+*/
+app.delete("/products/:id", catchAsync(async (req, res) => {
   const { id } = req.params;
   await Product.findByIdAndDelete(id);
   res.redirect("/products");
-});
+}));
+/*
 
 //------------------------------------------------------------------------------------------------------
 
@@ -126,6 +131,16 @@ app.get("/*", (req, res) => {
   console.log("Couldn't find requested address. Redirected to index page");
   res.redirect("/products");
 });*/
+
+app.all('*', (req, res, next) => {
+  next(new ExpressError('Page Not Found', 404))
+})
+
+app.use((err, req, res, next) => {
+  const { statusCode = 500, message = 'Something went wrong' } = err;
+  if(!err.message) err.message = "Oh No, Something Went Wrong!";
+  console.log(err.message);
+})
 
 app.listen(3000, () => {
   console.log("APP IS LISTENING ON PORT 3000!");
