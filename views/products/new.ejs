@@ -8,7 +8,7 @@
 <body>
     <h1><%= farm.name %></h1>
     <h2>Add a Product</h2>
-    <form action="/farms/<%=id%>/products" method="POST">
+    <form action="/farms/<%=farm._id%>/products" method="POST">
         <label for="name">Product Name:</label>
         <input type="text" name="name" placeholder="Product Name">
         <label for="price">Price (per Unit)</label>

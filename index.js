@@ -7,6 +7,8 @@ const Farm = require('./models/farm');
 const catchAsync = require('./utils/catchAsync');
 const ExpressError = require('./utils/ExpressError');
 
+const categories = ["fruit", "vegetable", "dairy"];
+
 const Product = require("./models/product");
 
 mongoose
@@ -49,9 +51,8 @@ app.post('/farms', catchAsync(async (req, res) => {
 }))
 
 app.get('/farms/:id/products/new', catchAsync(async (req, res) => {
-    const { id } = req.params;
-    const { farm } = await Farm.findById(id);
-    res.render('products/new', { categories, id });
+    const farm = await Farm.findById(req.params.id);
+    res.render('products/new', { categories, farm });
 }))
 
 app.post('/farms/:id/products', catchAsync(async (req, res) => {
@@ -70,7 +71,13 @@ app.post('/farms/:id/products', catchAsync(async (req, res) => {
 
 // PRODUCT ROUTES
 
-const categories = ["fruit", "vegetable", "dairy"];
+app.get("/products/:id/details", catchAsync(async (req, res) => {
+  const { id } = req.params;
+  const product = await Product.findById(id).populate("farm");
+  res.render("products/details", { product });
+}));
+
+
 
 /*app.get("/products", async (req, res) => {
   const { category } = req.query;
@@ -86,16 +93,6 @@ const categories = ["fruit", "vegetable", "dairy"];
 app.get("/products/new", (req, res) => {
   res.render("products/new", { categories });
 });
-
-*/
-app.get("/products/:id/details", catchAsync(async (req, res) => {
-  const { id } = req.params;
-  console.log(id);
-  const product = await Product.findById(id);
-  console.log(product);
-  res.render("products/details", { product });
-}));
-/*
 
 app.get("/products/:id/edit", async (req, res) => {
   const { id } = req.params;
@@ -120,8 +117,11 @@ app.put("/products/:id", async (req, res) => {
 */
 app.delete("/products/:id", catchAsync(async (req, res) => {
   const { id } = req.params;
-  await Product.findByIdAndDelete(id);
-  res.redirect("/products");
+  const product = Product.findById(id);
+  const farm = product.farm;
+  await product.deleteOne();
+  console.log(farm);
+  res.redirect(`/farms/${farm}`);
 }));
 /*
 
