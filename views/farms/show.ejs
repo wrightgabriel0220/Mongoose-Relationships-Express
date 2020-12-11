@@ -22,6 +22,10 @@
         <%}  %>
     </ol>
 
+    <form action = "/farms/<%=farm._id%>?_method=DELETE" method="POST">
+        <button>Delete</button>
+    </form>
+
     <a href="/farms/<%=farm._id%>/products/new"><button>Add Product</button></a>
     <a href="/farms"><button>Back to All Farms</button></a>
 </body>

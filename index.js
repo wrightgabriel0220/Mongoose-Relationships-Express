@@ -10,6 +10,7 @@ const ExpressError = require('./utils/ExpressError');
 const categories = ["fruit", "vegetable", "dairy"];
 
 const Product = require("./models/product");
+const { findById, findByIdAndDelete } = require("./models/farm");
 
 mongoose
   .connect("mongodb://localhost:27017/farmStandTake2", {
@@ -30,19 +31,28 @@ app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
 
 // FARM ROUTES
+// Read - Farms Index
 app.get('/farms', catchAsync(async (req, res) => {
   const farms = await Farm.find({});
   res.render('farms/index', { farms });
 }))
 
+// Create - Farms
+app.get('/farms/new', (req, res) => {
+  res.render('farms/new');
+})
+
+// Read - Farms Show 
 app.get('/farms/:id', catchAsync(async (req, res) => {
   const farm = await Farm.findById(req.params.id).populate('products');
   res.render('farms/show', { farm });
 }))
 
-app.get('/farms/new', (req, res) => {
-  res.render('farms/new');
-})
+app.delete('/farms/:id', catchAsync(async (req, res) => {
+  console.log("DELETING!")
+  const farm = await Farm.findByIdAndDelete(req.params.id);
+  res.redirect('/farms');
+}))
 
 app.post('/farms', catchAsync(async (req, res) => {
   const farm = new Farm(req.body);
@@ -50,6 +60,8 @@ app.post('/farms', catchAsync(async (req, res) => {
   res.redirect('/farms');
 }))
 
+// PRODUCT ROUTES
+// Create - Products
 app.get('/farms/:id/products/new', catchAsync(async (req, res) => {
     const farm = await Farm.findById(req.params.id);
     res.render('products/new', { categories, farm });
@@ -66,10 +78,6 @@ app.post('/farms/:id/products', catchAsync(async (req, res) => {
     await product.save();
     res.redirect(`/farms/${id}`);
 }))
-
-
-
-// PRODUCT ROUTES
 
 app.get("/products/:id/details", catchAsync(async (req, res) => {
   const { id } = req.params;
